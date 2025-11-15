@@ -36,10 +36,10 @@ func (s *UserService) UpdateUser(user models.User) (*models.User, int, *Error) {
 }
 
 func (s *UserService) GetUsersReview(userId string) (*models.UsersReviews, int, *Error) {
-	reviews, notFound, err := s.repo.GetUsersReview(userId)
-	if notFound {
-		return nil, http.StatusNotFound, &Error{Code: "NOT_FOUND", Message: "resource not found"}
-	}
+	reviews, _, err := s.repo.GetUsersReview(userId)
+	//if notFound {
+	//	return nil, http.StatusNotFound, &Error{Code: "NOT_FOUND", Message: "resource not found"}
+	//}
 	if err != nil {
 		s.l.Errorf("Error get review. Error %v", err)
 		return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
