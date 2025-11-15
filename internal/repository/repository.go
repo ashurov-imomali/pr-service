@@ -79,7 +79,7 @@ func (r *repo) UpdateUser(user *models.User) (bool, error) {
 
 func (r *repo) GetUsersReview(userID string) (*models.UsersReviews, bool, error) {
 	result := models.UsersReviews{
-		UserId: userID,
+		UserID: userID,
 	}
 
 	tx := r.db.Table("pull_requests pr").
@@ -92,10 +92,10 @@ func (r *repo) GetUsersReview(userID string) (*models.UsersReviews, bool, error)
 	return &result, tx.RowsAffected == 0, nil
 }
 
-func (r *repo) GetUserById(id string) (*models.User, bool, error) {
+func (r *repo) GetUserByID(id string) (*models.User, bool, error) {
 	var result models.User
 	if err := r.db.First(&result, "id=?", id).Error; err != nil {
-		return nil, errors.Is(gorm.ErrRecordNotFound, err), err
+		return nil, errors.Is(err, gorm.ErrRecordNotFound), err
 	}
 	return &result, false, nil
 }
@@ -120,11 +120,11 @@ func (r *repo) CreatePullRequest(pr *models.PullRequest, reviewers []models.PrRe
 	return nil
 }
 
-func (r *repo) GetUsersIdByTeamName(teamName, authorId string) ([]string, bool, error) {
+func (r *repo) GetUsersIDByTeamName(teamName, authorID string) ([]string, bool, error) {
 	var ids []string
 
 	tx := r.db.Select("id").Table("users").
-		Where("is_active=? and team_name=? and id != ?", true, teamName, authorId).
+		Where("is_active=? and team_name=? and id != ?", true, teamName, authorID).
 		Order("random()").Limit(2).Scan(&ids)
 	if tx.Error != nil {
 		return nil, false, tx.Error
@@ -146,24 +146,24 @@ func (r *repo) UpdatePullRequest(pullRequest *models.PullRequest) (bool, error) 
 	return tx.RowsAffected == 0, nil
 }
 
-func (r *repo) GetUsersIdByReviewId(plID string) ([]string, error) {
+func (r *repo) GetUsersIDByReviewID(prID string) ([]string, error) {
 	var result []string
 	return result, r.db.Model(&models.PrReviewer{}).Select("reviewer_id").
-		Where("pull_request_id=?", plID).Scan(&result).Error
+		Where("pull_request_id=?", prID).Scan(&result).Error
 }
 
-func (r *repo) GetUsersIdByPRId(prId string) ([]string, error) {
+func (r *repo) GetUsersIDByPRID(prID string) ([]string, error) {
 	var result []string
 	return result, r.db.Select("reviewer_id").Table("pr_reviewers").
-		Where("pull_request_id=?", prId).Scan(&result).Error
+		Where("pull_request_id=?", prID).Scan(&result).Error
 }
 
-func (r *repo) GetRandomUser(userId, prID string) (string, bool, error) {
+func (r *repo) GetRandomUser(userID, prID string) (string, bool, error) {
 	var id string
 	tx := r.db.Select("u1.id").Table("users u1").
 		Joins("join users u2 on u2.team_name = u1.team_name").
 		Joins("left join pr_reviewers pr on u1.id = pr.reviewer_id and pr.pull_request_id=?", prID).
-		Where("u2.id=? and u1.id !=? and u1.is_active=? and pr.reviewer_id is null", userId, userId, true).
+		Where("u2.id=? and u1.id !=? and u1.is_active=? and pr.reviewer_id is null", userID, userID, true).
 		Order("random()").Scan(&id)
 	if tx.Error != nil {
 		return "", false, tx.Error
@@ -171,13 +171,13 @@ func (r *repo) GetRandomUser(userId, prID string) (string, bool, error) {
 	return id, tx.RowsAffected == 0, nil
 }
 
-func (r *repo) UpdateReviewer(prId, oldReviewerId, newReviewerId string) error {
+func (r *repo) UpdateReviewer(prID, oldReviewerID, newReviewerID string) error {
 	return r.db.Model(&models.PrReviewer{}).
-		Where("pull_request_id=? and reviewer_id=?", prId, oldReviewerId).
-		Update("reviewer_id", newReviewerId).Error
+		Where("pull_request_id=? and reviewer_id=?", prID, oldReviewerID).
+		Update("reviewer_id", newReviewerID).Error
 }
 
-func (r *repo) GetPullRequestById(id string) (*models.PullRequest, bool, error) {
+func (r *repo) GetPullRequestByID(id string) (*models.PullRequest, bool, error) {
 	var result models.PullRequest
 	if err := r.db.First(&result, "id=?", id).Error; err != nil {
 		return nil, errors.Is(err, gorm.ErrRecordNotFound), err
@@ -185,9 +185,9 @@ func (r *repo) GetPullRequestById(id string) (*models.PullRequest, bool, error) 
 	return &result, false, nil
 }
 
-func (r *repo) GetReviewListById(prId, userId string) (*models.PrReviewer, bool, error) {
+func (r *repo) GetReviewListByID(prID, userID string) (*models.PrReviewer, bool, error) {
 	var result models.PrReviewer
-	if err := r.db.First(&result, "pull_request_id=? and reviewer_id=?", prId, userId).
+	if err := r.db.First(&result, "pull_request_id=? and reviewer_id=?", prID, userID).
 		Error; err != nil {
 		return nil, errors.Is(err, gorm.ErrRecordNotFound), err
 	}

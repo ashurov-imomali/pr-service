@@ -23,9 +23,9 @@ func (s *PRService) CreatePullRequest(pr models.PullRequest) (*models.Review, in
 		return nil, http.StatusUnprocessableEntity, &Error{Code: "INVALID_PULL_REQUEST_NAME"}
 	}
 
-	user, notFound, err := s.repo.GetUserById(pr.AuthorId) //не активный пользователь
+	user, notFound, err := s.repo.GetUserByID(pr.AuthorID) //не активный пользователь
 	if notFound {
-		s.l.Warnf("user not found. ID: %s", pr.AuthorId)
+		s.l.Warnf("user not found. ID: %s", pr.AuthorID)
 		return nil, http.StatusNotFound, &Error{Code: "NOT_FOUND", Message: "resource not found"}
 	}
 
@@ -34,7 +34,7 @@ func (s *PRService) CreatePullRequest(pr models.PullRequest) (*models.Review, in
 		return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
 	}
 
-	randUsers, _, err := s.repo.GetUsersIdByTeamName(user.TeamName, pr.AuthorId)
+	randUsers, _, err := s.repo.GetUsersIDByTeamName(user.TeamName, pr.AuthorID)
 	if err != nil {
 		s.l.Errorf("Error in BD (get user by teamnam). err %v", err)
 		return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
@@ -42,8 +42,8 @@ func (s *PRService) CreatePullRequest(pr models.PullRequest) (*models.Review, in
 
 	reviewers := make([]models.PrReviewer, len(randUsers))
 	for i := 0; i < len(randUsers); i++ {
-		reviewers[i].PullRequestId = pr.Id
-		reviewers[i].ReviewerId = randUsers[i]
+		reviewers[i].PullRequestID = pr.ID
+		reviewers[i].ReviewerID = randUsers[i]
 	}
 
 	pr.Status = "OPEN"
@@ -55,17 +55,17 @@ func (s *PRService) CreatePullRequest(pr models.PullRequest) (*models.Review, in
 	return &models.Review{PullRequest: pr, AssignedReviewers: randUsers}, http.StatusCreated, nil
 }
 
-func (s *PRService) MergePullRequest(pullRequestId string) (*models.Review, int, *Error) {
+func (s *PRService) MergePullRequest(pullRequestID string) (*models.Review, int, *Error) {
 	now := time.Now()
 	pr := models.PullRequest{
-		Id:       pullRequestId,
+		ID:       pullRequestID,
 		Status:   "MERGED",
 		MergedAt: &now,
 	}
 
 	notFound, err := s.repo.UpdatePullRequest(&pr)
 	if notFound {
-		s.l.Warnf("PullRequest not found. id: %s", pullRequestId)
+		s.l.Warnf("PullRequest not found. id: %s", pullRequestID)
 		return nil, http.StatusNotFound, &Error{Code: "NOT_FOUND", Message: "resource not found"}
 	}
 	if err != nil {
@@ -73,7 +73,7 @@ func (s *PRService) MergePullRequest(pullRequestId string) (*models.Review, int,
 		return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
 	}
 
-	ids, err := s.repo.GetUsersIdByReviewId(pr.Id)
+	ids, err := s.repo.GetUsersIDByReviewID(pr.ID)
 	if err != nil {
 		s.l.Errorf("Err in bd (get reviewers). Err %v", err)
 		return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
@@ -88,7 +88,7 @@ func (s *PRService) UpdateReviewer(review models.UpdateReviewer) (*models.Update
 		return nil, status, wErr
 	}
 
-	newReviewer, notFound, err := s.repo.GetRandomUser(pr.AuthorId, review.PullRequestId)
+	newReviewer, notFound, err := s.repo.GetRandomUser(review.OldReviewerID, review.PullRequestID)
 	if notFound {
 		s.l.Warnf("No candidate %+v", review)
 		return nil, http.StatusConflict, &Error{Code: "NO_CANDIDATE", Message: "no active replacement candidate in team"}
@@ -99,12 +99,12 @@ func (s *PRService) UpdateReviewer(review models.UpdateReviewer) (*models.Update
 		return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
 	}
 
-	if err := s.repo.UpdateReviewer(review.PullRequestId, review.OldReviewerId, newReviewer); err != nil {
+	if err := s.repo.UpdateReviewer(review.PullRequestID, review.OldReviewerID, newReviewer); err != nil {
 		s.l.Errorf("Error in bd (update review). Err %v", err)
 		return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
 	}
 
-	assignedReviewers, err := s.repo.GetUsersIdByPRId(pr.Id)
+	assignedReviewers, err := s.repo.GetUsersIDByPRID(pr.ID)
 	if err != nil {
 		s.l.Errorf("Error in bd (update review). Err %v", err)
 		return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
@@ -116,7 +116,7 @@ func (s *PRService) UpdateReviewer(review models.UpdateReviewer) (*models.Update
 }
 
 func (s *PRService) validateReassign(review models.UpdateReviewer) (*models.PullRequest, int, *Error) {
-	pr, notFound, err := s.repo.GetPullRequestById(review.PullRequestId)
+	pr, notFound, err := s.repo.GetPullRequestByID(review.PullRequestID)
 	switch {
 	case notFound:
 		s.l.Warnf("Not found. request: %+v", review)
@@ -129,7 +129,7 @@ func (s *PRService) validateReassign(review models.UpdateReviewer) (*models.Pull
 
 	}
 
-	_, notFound, err = s.repo.GetReviewListById(review.PullRequestId, review.OldReviewerId)
+	_, notFound, err = s.repo.GetReviewListByID(review.PullRequestID, review.OldReviewerID)
 	if notFound {
 		s.l.Warnf("Not found. request: %+v", review)
 		return nil, http.StatusConflict, &Error{Code: "NOT_ASSIGNED", Message: "reviewer is not assigned to this PR"}

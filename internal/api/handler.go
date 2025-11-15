@@ -32,7 +32,7 @@ func (h *Handler) addTeam(w http.ResponseWriter, r *http.Request) {
 
 	var team models.TeamWithMembers
 	if err := json.NewDecoder(r.Body).Decode(&team); err != nil {
-		writeError(w, http.StatusBadRequest, "INVALID_JSON")
+		writeError(w, "INVALID_JSON")
 		return
 	}
 
@@ -53,7 +53,7 @@ func (h *Handler) getTeam(w http.ResponseWriter, r *http.Request) {
 
 	teamName := r.URL.Query().Get("team_name")
 	if teamName == "" {
-		writeError(w, http.StatusBadRequest, "invalid team name")
+		writeError(w, "invalid team name")
 		return
 	}
 
@@ -73,7 +73,7 @@ func (h *Handler) setUser(w http.ResponseWriter, r *http.Request) {
 
 	var user models.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		writeError(w, http.StatusBadRequest, "INVALID_JSON")
+		writeError(w, "INVALID_JSON")
 		return
 	}
 
@@ -91,13 +91,13 @@ func (h *Handler) getUserReviews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId := r.URL.Query().Get("user_id")
-	if len(strings.TrimSpace(userId)) == 0 {
-		writeError(w, http.StatusBadRequest, "invalid userId")
+	userID := r.URL.Query().Get("user_id")
+	if len(strings.TrimSpace(userID)) == 0 {
+		writeError(w, "invalid userID")
 		return
 	}
 
-	reviews, status, err := h.us.GetUsersReview(userId)
+	reviews, status, err := h.us.GetUsersReview(userID)
 	if err != nil {
 		writeJSON(w, status, err)
 		return
@@ -114,7 +114,7 @@ func (h *Handler) createPullRequest(w http.ResponseWriter, r *http.Request) {
 
 	var pullRequest models.PullRequest
 	if err := json.NewDecoder(r.Body).Decode(&pullRequest); err != nil {
-		writeError(w, http.StatusBadRequest, "INVALID_JSON")
+		writeError(w, "INVALID_JSON")
 		return
 	}
 
@@ -136,10 +136,10 @@ func (h *Handler) mergePullRequest(w http.ResponseWriter, r *http.Request) {
 
 	var pullRequest models.PullRequest
 	if err := json.NewDecoder(r.Body).Decode(&pullRequest); err != nil {
-		writeError(w, http.StatusBadRequest, "INVALID_JSON")
+		writeError(w, "INVALID_JSON")
 		return
 	}
-	review, status, wErr := h.prs.MergePullRequest(pullRequest.Id)
+	review, status, wErr := h.prs.MergePullRequest(pullRequest.ID)
 	if wErr != nil {
 		writeJSON(w, status, wErr)
 		return
@@ -155,7 +155,7 @@ func (h *Handler) reassignPullRequest(w http.ResponseWriter, r *http.Request) {
 
 	var newReviewer models.UpdateReviewer
 	if err := json.NewDecoder(r.Body).Decode(&newReviewer); err != nil {
-		writeError(w, http.StatusBadRequest, "INVALID_JSON")
+		writeError(w, "INVALID_JSON")
 		return
 	}
 
@@ -187,13 +187,13 @@ func (h *Handler) getUsersStat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId := r.URL.Query().Get("user_id")
-	if userId == "" {
-		writeError(w, http.StatusBadRequest, "invalid user id")
+	userID := r.URL.Query().Get("user_id")
+	if userID == "" {
+		writeError(w, "invalid user id")
 		return
 	}
 
-	stat, err := h.ss.GetUserStat(userId)
+	stat, err := h.ss.GetUserStat(userID)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, err)
 		return

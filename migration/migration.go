@@ -18,10 +18,9 @@ func Run(dsn string) error {
 	defer db.Close()
 
 	goose.SetBaseFS(EmbedMigrations)
-	goose.SetDialect("postgres")
-
-	if err := goose.Up(db, "migrations"); err != nil {
+	if err := goose.SetDialect("postgres"); err != nil {
 		return err
 	}
-	return nil
+
+	return goose.Up(db, "migrations")
 }

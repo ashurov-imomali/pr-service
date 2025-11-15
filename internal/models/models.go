@@ -21,22 +21,22 @@ type TeamWithMembers struct {
 }
 
 type PullRequest struct {
-	Id        string     `json:"pull_request_id"`
+	ID        string     `json:"pull_request_id"`
 	Name      string     `json:"pull_request_name"`
-	AuthorId  string     `json:"author_id"`
+	AuthorID  string     `json:"author_id"`
 	Status    string     `json:"status"`
 	CreatedAt time.Time  `json:"-"`
 	MergedAt  *time.Time `json:"merged_at,omitempty" gorm:"type:timestamptz"`
 }
 
 type UsersReviews struct {
-	UserId       string        `json:"user_id"`
+	UserID       string        `json:"user_id"`
 	PullRequests []PullRequest `json:"pull_requests"`
 }
 
 type PrReviewer struct {
-	PullRequestId string `json:"pull_request_id"`
-	ReviewerId    string `json:"reviewer_id"`
+	PullRequestID string `json:"pull_request_id"`
+	ReviewerID    string `json:"reviewer_id"`
 }
 
 type Review struct {
@@ -45,14 +45,14 @@ type Review struct {
 }
 
 type UpdateReviewer struct {
-	PullRequestId string `json:"pull_request_id"`
-	OldReviewerId string `json:"old_reviewer_id"`
+	PullRequestID string `json:"pull_request_id"`
+	OldReviewerID string `json:"old_reviewer_id"`
 }
 
 type UpdatedPR struct {
 	PullRequest
 	AssignedReviewers []string `json:"assigned_reviewers"`
-	ReplacedBy        string
+	ReplacedBy        string   `json:"replaced_by"`
 }
 
 type GeneralStats struct {
@@ -61,7 +61,7 @@ type GeneralStats struct {
 }
 
 type UsersStat struct {
-	UserId  string `json:"user_id"`
+	UserID  string `json:"user_id"`
 	PRCount int64  `json:"pr_count"`
 }
 

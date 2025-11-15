@@ -24,7 +24,7 @@ func (s *UserService) UpdateUser(user models.User) (*models.User, int, *Error) {
 
 	notFound, err := s.repo.UpdateUser(&user)
 	if notFound {
-		s.l.Warnf("User not found. UserId: %s", user.ID)
+		s.l.Warnf("User not found. userID: %s", user.ID)
 		return nil, http.StatusNotFound, &Error{Code: "NOT_FOUND", Message: "resource not found"}
 	}
 	if err != nil {
@@ -35,8 +35,8 @@ func (s *UserService) UpdateUser(user models.User) (*models.User, int, *Error) {
 	return &user, http.StatusOK, nil
 }
 
-func (s *UserService) GetUsersReview(userId string) (*models.UsersReviews, int, *Error) {
-	reviews, _, err := s.repo.GetUsersReview(userId)
+func (s *UserService) GetUsersReview(userID string) (*models.UsersReviews, int, *Error) {
+	reviews, _, err := s.repo.GetUsersReview(userID)
 	//if notFound {
 	//	return nil, http.StatusNotFound, &Error{Code: "NOT_FOUND", Message: "resource not found"}
 	//}
