@@ -5,6 +5,7 @@ import (
 	"github.com/ashurov-imomali/pr-service/internal/repository"
 	"github.com/ashurov-imomali/pr-service/internal/server"
 	"github.com/ashurov-imomali/pr-service/internal/usecase"
+	"github.com/ashurov-imomali/pr-service/migration"
 	"github.com/ashurov-imomali/pr-service/pkg/db"
 	"github.com/ashurov-imomali/pr-service/pkg/logger"
 	"golang.org/x/net/context"
@@ -24,6 +25,10 @@ func main() {
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	if err := migration.Run(dbDSN); err != nil {
+		log.Fatalf("Error in migration. Err %v", err)
 	}
 
 	pgConnection, err := db.New(dbDSN)
