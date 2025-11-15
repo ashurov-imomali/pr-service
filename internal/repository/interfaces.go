@@ -17,4 +17,7 @@ type Repository interface {
 	UpdateReviewer(prId, oldReviewerId, newReviewerId string) error
 	GetPullRequestById(id string) (*models.PullRequest, bool, error)
 	GetReviewListById(prId, userID string) (*models.PrReviewer, bool, error)
+	GetUsersStat() ([]models.UsersStat, error)
+	GetPRStats() (models.PRStats, error)
+	GetUserStat(id string) (*models.UserStat, error)
 }

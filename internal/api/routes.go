@@ -18,4 +18,10 @@ func (h *Handler) RegisterRouters(mux *http.ServeMux) {
 		mux.HandleFunc("/pullRequests/merge", h.mergePullRequest)
 		mux.HandleFunc("/pullRequests/reassign", h.reassignPullRequest)
 	}
+
+	{
+		mux.HandleFunc("/stats", h.getGeneralStats)
+		mux.HandleFunc("/stats/user", h.getUsersStat)
+	}
+
 }

@@ -41,8 +41,9 @@ func main() {
 	prs := usecase.NewPRService(r, log)
 	us := usecase.NewUserService(r, log)
 	ts := usecase.NewTeamService(r, log)
+	ss := usecase.NewStatService(r, log)
 
-	h := api.New(prs, us, ts)
+	h := api.New(prs, us, ts, ss)
 
 	srv := server.NewServer(":"+port, h)
 	stop := make(chan os.Signal, 1)

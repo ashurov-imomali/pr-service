@@ -12,13 +12,15 @@ type Handler struct {
 	prs *usecase.PRService
 	us  *usecase.UserService
 	ts  *usecase.TeamService
+	ss  *usecase.StatService
 }
 
-func New(prs *usecase.PRService, us *usecase.UserService, ts *usecase.TeamService) *Handler {
+func New(prs *usecase.PRService, us *usecase.UserService, ts *usecase.TeamService, ss *usecase.StatService) *Handler {
 	return &Handler{
 		prs: prs,
 		us:  us,
 		ts:  ts,
+		ss:  ss,
 	}
 }
 
@@ -164,4 +166,38 @@ func (h *Handler) reassignPullRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, status, result)
+}
+
+func (h *Handler) getGeneralStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	stat, err := h.ss.GetGeneralStat()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, stat)
+}
+
+func (h *Handler) getUsersStat(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	userId := r.URL.Query().Get("user_id")
+	if userId == "" {
+		writeError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	stat, err := h.ss.GetUserStat(userId)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, stat)
 }

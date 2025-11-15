@@ -193,3 +193,43 @@ func (r *repo) GetReviewListById(prId, userId string) (*models.PrReviewer, bool,
 	}
 	return &result, false, nil
 }
+
+func (r *repo) GetUsersStat() ([]models.UsersStat, error) {
+	var stat []models.UsersStat
+	return stat, r.db.Select("users.id user_id, count(pr.*) pr_count").Model(&models.User{}).
+		Joins("left join pr_reviewers pr on users.id = pr.reviewer_id").
+		Group("users.id").Find(&stat).Error
+}
+
+func (r *repo) GetPRStats() (models.PRStats, error) {
+	var result models.PRStats
+	return result, r.db.Select(`count(*) total,
+count(*) filter(where status = 'OPEN') open,
+count(*) filter(where status = 'MERGE') merged
+`).Model(&models.PullRequest{}).Find(&result).Error
+}
+
+func (r *repo) GetUserStat(id string) (*models.UserStat, error) {
+	//select u.id,
+	//       count(pr.*),
+	//       count(p.*),
+	//       count(p.*) filter (where pr1.status = 'MERGED'),
+	//       count(p.*) filter ( where pr1.status = 'OPEN')
+	//from users u
+	//left join pull_requests pr on u.id = pr.author_id
+	//left join pr_reviewers p on p.reviewer_id = u.id
+	//left join pull_requests pr1 on pr1.id = p.pull_request_id
+	//group by u.id;
+	var result models.UserStat
+	return &result, r.db.Select(`u.*,
+	       count(pr.*) pull_requests_count,
+	       count(p.*) reviews_count,
+	       count(p.*) filter (where pr1.status = 'MERGED') merged_reviews_count,
+	       count(p.*) filter ( where pr1.status = 'OPEN') open_reviews_count`).
+		Table("users u").
+		Joins("left join pull_requests pr on u.id = pr.author_id").
+		Joins("left join pr_reviewers p on p.reviewer_id = u.id").
+		Joins("left join pull_requests pr1 on pr1.id = p.pull_request_id").
+		Where("u.id=?", id).
+		Group("u.id").Find(&result).Error
+}

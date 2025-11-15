@@ -54,3 +54,27 @@ type UpdatedPR struct {
 	AssignedReviewers []string `json:"assigned_reviewers"`
 	ReplacedBy        string
 }
+
+type GeneralStats struct {
+	UsersStat []UsersStat `json:"users_stat"`
+	PRStats   PRStats     `json:"pr_stats"`
+}
+
+type UsersStat struct {
+	UserId  string `json:"user_id"`
+	PRCount int64  `json:"pr_count"`
+}
+
+type PRStats struct {
+	Total int64 `json:"total"`
+	Open  int64 `json:"open"`
+	Merge int64 `json:"merge"`
+}
+
+type UserStat struct {
+	User
+	PullRequestsCount  int64 `json:"pull_requests_count"`
+	ReviewsCount       int64 `json:"reviews_count"`
+	MergedReviewsCount int64 `json:"merged_reviews_count"`
+	OpenReviewsCount   int64 `json:"open_reviews_count"`
+}
