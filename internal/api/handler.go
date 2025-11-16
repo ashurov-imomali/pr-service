@@ -201,3 +201,23 @@ func (h *Handler) getUsersStat(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, stat)
 }
+
+func (h *Handler) deactivateTeam(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	var team models.Team
+	if err := json.NewDecoder(r.Body).Decode(&team); err != nil {
+		writeError(w, "invalid json")
+		return
+	}
+	deactiveUsers, status, err := h.ts.DeactivateTeam(team.Name)
+	if err != nil {
+		writeJSON(w, status, err)
+		return
+	}
+
+	writeJSON(w, status, deactiveUsers)
+}

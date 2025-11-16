@@ -50,3 +50,16 @@ func (s *TeamService) GetTeam(teamName string) (*models.TeamWithMembers, int, *E
 
 	return result, http.StatusOK, nil
 }
+
+func (s *TeamService) DeactivateTeam(teamName string) ([]models.User, int, *Error) {
+	deactiveUsers, notFound, err := s.repo.DeactivateTeam(teamName)
+	if notFound {
+		return nil, http.StatusNotFound, &Error{Code: "TEAM_NOT_FOUND"}
+	}
+	if err != nil {
+		s.l.Errorf("Err in bd. Err %v", err)
+		return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
+	}
+
+	return deactiveUsers, http.StatusOK, nil
+}

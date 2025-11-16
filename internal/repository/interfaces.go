@@ -20,4 +20,6 @@ type Repository interface {
 	GetUsersStat() ([]models.UsersStat, error)
 	GetPRStats() (models.PRStats, error)
 	GetUserStat(id string) (*models.UserStat, error)
+	DeactivateTeam(teamName string) ([]models.User, bool, error)
+	DeleteReviewer(userID, prID string) error
 }

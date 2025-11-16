@@ -160,10 +160,17 @@ func (r *repo) GetUsersIDByPRID(prID string) ([]string, error) {
 
 func (r *repo) GetRandomUser(userID, prID string) (string, bool, error) {
 	var id string
+	//SELECT u1.id, u2.id, p.id, pr.* FROM users u1
+	//join users u2 on u1.team_name = u2.team_name and u2.id = 'u-2'
+	//left join pull_requests p on u1.id = p.author_id
+	//left join pr_reviewers pr on u1.id = pr.reviewer_id and pr.pull_request_id='tpr-2'
+	//where u1.is_active=true and pr.reviewer_id is null and p.id is null
+	//ORDER BY random();
 	tx := r.db.Select("u1.id").Table("users u1").
-		Joins("join users u2 on u2.team_name = u1.team_name").
-		Joins("left join pr_reviewers pr on u1.id = pr.reviewer_id and pr.pull_request_id=?", prID).
-		Where("u2.id=? and u1.id !=? and u1.is_active=? and pr.reviewer_id is null", userID, userID, true).
+		Joins("join users u2 on u1.team_name=u2.team_name and u2.id=?", userID).                     // беру тех кто из команды
+		Joins("left join pull_requests p on u1.id = p.author_id").                                   // исключаю автора
+		Joins("left join pr_reviewers pr on u1.id = pr.reviewer_id and pr.pull_request_id=?", prID). //исключаю тех кто уже как ревьюЕО стоят
+		Where("u1.is_active=? and pr.reviewer_id is null and p.id is null", true).
 		Order("random()").Scan(&id)
 	if tx.Error != nil {
 		return "", false, tx.Error
@@ -232,4 +239,38 @@ func (r *repo) GetUserStat(id string) (*models.UserStat, error) {
 		Joins("left join pull_requests pr1 on pr1.id = p.pull_request_id").
 		Where("u.id=?", id).
 		Group("u.id").Find(&result).Error
+}
+
+func (r *repo) DeactivateTeam(teamName string) ([]models.User, bool, error) {
+	var result []models.User
+	tx := r.db.Begin()
+
+	if err := tx.Model(&result).
+		Clauses(clause.Returning{}).
+		Where("team_name=?", teamName).
+		Update("is_active", false).Error; err != nil {
+		tx.Rollback()
+		return nil, false, err
+	}
+
+	for _, user := range result {
+		if err := tx.Exec(`
+    delete from pr_reviewers p
+    using pull_requests pr
+    where p.pull_request_id = pr.id
+      and pr.status = 'OPEN'
+      and p.reviewer_id = ?;
+`, user.ID).Error; err != nil {
+			tx.Rollback()
+			return nil, false, err
+		}
+
+	}
+
+	tx.Commit()
+	return result, len(result) == 0, nil
+}
+
+func (r *repo) DeleteReviewer(userID, prID string) error {
+	return r.db.Delete(models.PrReviewer{}, "reviewer_id=? and pull_request_id=?", userID, prID).Error
 }

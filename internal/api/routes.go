@@ -6,6 +6,7 @@ func (h *Handler) RegisterRouters(mux *http.ServeMux) {
 	{
 		mux.HandleFunc("/team/add", h.addTeam) //done
 		mux.HandleFunc("/team/get", h.getTeam) //done
+		mux.HandleFunc("/team/deactive", h.deactivateTeam)
 	}
 
 	{

@@ -22,7 +22,37 @@ func (s *UserService) UpdateUser(user models.User) (*models.User, int, *Error) {
 		return nil, http.StatusNotFound, &Error{Code: "NOT_FOUND", Message: "resource not found"}
 	}
 
-	notFound, err := s.repo.UpdateUser(&user)
+	review, notFound, err := s.repo.GetUsersReview(user.ID)
+	if err != nil {
+		s.l.Errorf("Error in bd. Err %v", err)
+		return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
+	}
+	if user.IsActive == false && !notFound {
+		for _, pr := range review.PullRequests {
+			if pr.Status == "MERGED" {
+				continue
+			}
+
+			randomUser, notFound, err := s.repo.GetRandomUser(user.ID, pr.ID)
+			if err != nil {
+				s.l.Errorf("Error in bd. Err %v", err)
+				return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
+			}
+			if notFound {
+				if err := s.repo.DeleteReviewer(user.ID, pr.ID); err != nil {
+					s.l.Errorf("Error in bd. Err %v", err)
+					return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
+				}
+				continue
+			}
+			if err := s.repo.UpdateReviewer(pr.ID, user.ID, randomUser); err != nil {
+				s.l.Errorf("Error in bd. Err %v", err)
+				return nil, http.StatusInternalServerError, &Error{Code: "INTERNAL_SERVER_ERROR"}
+			}
+		}
+	}
+
+	notFound, err = s.repo.UpdateUser(&user)
 	if notFound {
 		s.l.Warnf("User not found. userID: %s", user.ID)
 		return nil, http.StatusNotFound, &Error{Code: "NOT_FOUND", Message: "resource not found"}
