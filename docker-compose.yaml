@@ -3,15 +3,15 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pr_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -19,10 +19,10 @@ services:
   api:
     build: .
     environment:
-      APP_PORT: 8080
-      DB_DSN: "host=db user=postgres password=postgres dbname=pr_db sslmode=disable"
+      APP_PORT: ${APP_PORT}
+      DB_DSN: ${DB_DSN}
     ports:
-      - "8080:8080"
+      - "${APP_PORT}:${APP_PORT}"
     depends_on:
       db:
         condition: service_healthy
